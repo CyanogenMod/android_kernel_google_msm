@@ -164,7 +164,7 @@ int freeze_kernel_threads(void)
 {
 	int error;
 
-	error = suspend_sys_sync_wait();
+	error = sys_sync();
 	if (error)
 		return error;
 
