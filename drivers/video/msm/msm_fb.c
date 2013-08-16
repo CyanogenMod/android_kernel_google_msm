@@ -1645,6 +1645,11 @@ static int msm_fb_register(struct msm_fb_data_type *mfd)
 	    ("FrameBuffer[%d] %dx%d size=%d bytes is registered successfully!\n",
 	     mfd->index, fbi->var.xres, fbi->var.yres, fbi->fix.smem_len);
 
+#ifdef CONFIG_UPDATE_LCDC_LUT
+	if (msm_fb_pdata->update_lcdc_lut)
+		msm_fb_pdata->update_lcdc_lut();
+#endif
+
 #ifdef CONFIG_FB_MSM_LOGO
 	/* Flip buffer */
 	if (!load_565rle_image(INIT_IMAGE_FILE, bf_supported))
