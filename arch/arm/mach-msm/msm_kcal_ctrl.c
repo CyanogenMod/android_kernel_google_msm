@@ -41,6 +41,7 @@ struct kcal_platform_data {
 	int (*refresh_display) (void);
 };
 
+static bool lut_updated = false; 
 static struct kcal_platform_data *kcal_ctrl_pdata;
 static int last_status_kcal_ctrl;
 
@@ -114,8 +115,9 @@ static unsigned int lcd_rgb_preset_lut[256] = {
 };
 
 /* pixel order : sRBG */
-static unsigned int lcd_srgb_preset_lut[256] = {
+//static unsigned int lcd_srgb_preset_lut[256] = {
 	/* default linear qlut */
+/*
 	0x00000000, 0x00141414, 0x001c1c1c, 0x00212121,
 	0x00262626, 0x002a2a2a, 0x002e2e2e, 0x00313131,
 	0x00343434, 0x00373737, 0x003a3a3a, 0x003d3d3d,
@@ -181,6 +183,71 @@ static unsigned int lcd_srgb_preset_lut[256] = {
 	0x00fbfbfb, 0x00fcfcfc, 0x00fcfcfc, 0x00fdfdfd,
 	0x00fdfdfd, 0x00fefefe, 0x00fefefe, 0x00ffffff
 };
+*/
+
+void static updateLUT(unsigned int lut_val, unsigned int color,
+			unsigned int posn)
+{
+	int offset, mask;
+
+	if (lut_val > 0xff)
+		return;
+
+	if (color == 0) {
+		offset = 16;
+		mask = 0x0000ffff;
+	} else if (color == 1) {
+		offset = 8;
+		mask = 0x00ff00ff;
+	} else if (color == 2) {
+		offset = 0;
+		mask = 0x00ffff00;
+	} else
+		// bad color select!
+		return;
+
+	lcd_rgb_preset_lut[posn] = (lcd_rgb_preset_lut[posn] & mask) |
+					(lut_val << offset); 
+}
+
+static ssize_t kgamma_store(struct device *dev, struct device_attribute *attr,
+                                                const char *buf, size_t count)
+{
+	int lut, color, posn;
+
+	if (!count)
+		return -EINVAL;
+
+	sscanf(buf, "%u %u %u", &lut, &color, &posn);
+
+	if (lut > 0xff)
+		return count;
+
+	if (posn > 0xff)
+		return count;
+
+	if (color > 2)
+		return count;
+
+	updateLUT(lut, color, posn);
+	lut_updated = true;
+	return count;
+}
+
+static ssize_t kgamma_show(struct device *dev, struct device_attribute *attr,
+                                                                char *buf)
+{
+	int res = 0;
+
+	if (lut_updated) {
+		res = sprintf(buf, "OK\n");
+		lut_updated = false;
+	} else 
+		res = sprintf(buf, "NG\n");
+
+	return res;
+
+}
 
 static struct kcal_data kcal_value = {255, 255, 255};
 
@@ -197,7 +264,7 @@ static int update_lcdc_lut(void)
 	cmap.green = (uint16_t *)&(kcal_value.green);
 	cmap.blue = (uint16_t *)&(kcal_value.blue);
 
-	ret = mdp_preset_lut_update_lcdc(&cmap, lcd_srgb_preset_lut);
+	ret = mdp_preset_lut_update_lcdc(&cmap, lcd_rgb_preset_lut);
 
 	//if (ret)
 	//	pr_err("%s: failed to set lut! %d\n", __func__, ret);
@@ -290,6 +357,7 @@ static ssize_t kcal_version_show(struct device *dev,
 			KCAL_CTRL_MINOR_VERSION);
 }
 
+static DEVICE_ATTR(power_line, 0644, kgamma_show, kgamma_store); 
 static DEVICE_ATTR(power_rail, 0644, kcal_show, kcal_store);
 static DEVICE_ATTR(power_rail_ctrl, 0644, kcal_ctrl_show, kcal_ctrl_store);
 static DEVICE_ATTR(power_rail_version, 0444, kcal_version_show, NULL);
@@ -305,6 +373,9 @@ static int kcal_ctrl_probe(struct platform_device *pdev)
 		return -1;
 	}
 
+	rc = device_create_file(&pdev->dev, &dev_attr_power_line);
+	if(rc !=0)
+		return -1;
 	rc = device_create_file(&pdev->dev, &dev_attr_power_rail);
 	if(rc !=0)
 		return -1;
