@@ -531,7 +531,7 @@ static void msm_kcal_late_resume(struct early_suspend *handler)
 }
 
 static struct early_suspend msm_kcal_early_suspend_struct_driver = {
-        .level = EARLY_SUSPEND_LEVEL_DISABLE_FB + 10,
+        .level = EARLY_SUSPEND_LEVEL_BLANK_SCREEN - 20,
         .suspend = msm_kcal_early_suspend,
         .resume = msm_kcal_late_resume,
 };
