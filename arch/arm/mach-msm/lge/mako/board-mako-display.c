@@ -104,6 +104,8 @@ static int msm_fb_detect_panel(const char *name)
 
 #ifdef CONFIG_LCD_KCAL
 struct kcal_data kcal_value;
+
+extern int g_kcal_min;
 #endif
 
 #ifdef CONFIG_UPDATE_LCDC_LUT
@@ -287,9 +289,13 @@ int kcal_set_values(int kcal_r, int kcal_g, int kcal_b)
 		kcal_b = kcal_b < 0 ? 0 : kcal_b;
 		kcal_b = kcal_b > 255 ? 255 : kcal_b;
 
-	kcal_value.red = kcal_r;
-	kcal_value.green = kcal_g;
-	kcal_value.blue = kcal_b;
+	kcal_value.red = kcal_r < g_kcal_min ? g_kcal_min : kcal_r;
+	kcal_value.green = kcal_g < g_kcal_min ? g_kcal_min : kcal_g;
+	kcal_value.blue = kcal_b < g_kcal_min ? g_kcal_min : kcal_b;
+
+	if (kcal_r < g_kcal_min || kcal_g < g_kcal_min || kcal_b < g_kcal_min)
+		update_preset_lcdc_lut();
+
 	return 0;
 }
 
@@ -301,6 +307,32 @@ static int kcal_get_values(int *kcal_r, int *kcal_g, int *kcal_b)
 	return 0;
 }
 
+int kcal_set_min(int kcal_min)
+{
+	g_kcal_min = kcal_min;
+
+	if (g_kcal_min > 255)
+		g_kcal_min = 255;
+
+	if (g_kcal_min < 0)
+		g_kcal_min = 0;
+
+	if (g_kcal_min > kcal_value.red || g_kcal_min > kcal_value.green || g_kcal_min > kcal_value.blue) {
+		kcal_value.red = kcal_value.red < g_kcal_min ? g_kcal_min : kcal_value.red;
+		kcal_value.green = kcal_value.green < g_kcal_min ? g_kcal_min : kcal_value.green;
+		kcal_value.blue = kcal_value.blue < g_kcal_min ? g_kcal_min : kcal_value.blue;
+		update_preset_lcdc_lut();
+	}
+
+	return 0;
+}
+
+static int kcal_get_min(int *kcal_min)
+{
+	*kcal_min = g_kcal_min;
+	return 0;
+}
+
 static int kcal_refresh_values(void)
 {
 	return update_preset_lcdc_lut();
@@ -309,7 +341,9 @@ static int kcal_refresh_values(void)
 static struct kcal_platform_data kcal_pdata = {
 	.set_values = kcal_set_values,
 	.get_values = kcal_get_values,
-	.refresh_display = kcal_refresh_values
+	.refresh_display = kcal_refresh_values,
+	.set_min = kcal_set_min,
+	.get_min = kcal_get_min
 };
 
 static struct platform_device kcal_platrom_device = {

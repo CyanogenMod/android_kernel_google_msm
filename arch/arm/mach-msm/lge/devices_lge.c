@@ -26,6 +26,10 @@
 
 #include <ram_console.h>
 
+#ifdef CONFIG_LCD_KCAL
+int g_kcal_min = 35;
+#endif
+
 /* setting whether uart console is enalbed or disabled */
 static int uart_console_mode = 0;
 
@@ -79,6 +83,7 @@ hw_rev_type lge_get_board_revno(void)
 
 #ifdef CONFIG_LCD_KCAL
 extern int kcal_set_values(int kcal_r, int kcal_g, int kcal_b);
+extern int kcal_set_min(int kcal_min);
 static int __init display_kcal_setup(char *kcal)
 {
 	char vaild_k = 0;
@@ -86,7 +91,9 @@ static int __init display_kcal_setup(char *kcal)
 	int kcal_g = 0;
 	int kcal_b = 0;
 
-	sscanf(kcal, "%d|%d|%d|%c", &kcal_r, &kcal_g, &kcal_b, &vaild_k );
+	int kcal_min = 35;
+
+	sscanf(kcal, "%d|%d|%d|%c", &kcal_r, &kcal_g, &kcal_b, &vaild_k);
 	pr_info("kcal is %d|%d|%d|%c\n", kcal_r, kcal_g, kcal_b, vaild_k);
 
 	if (vaild_k != 'K') {
@@ -96,6 +103,7 @@ static int __init display_kcal_setup(char *kcal)
 	}
 
 	kcal_set_values(kcal_r, kcal_g, kcal_b);
+	kcal_set_min(kcal_min);
 	return 1;
 }
 __setup("lge.kcal=", display_kcal_setup);
