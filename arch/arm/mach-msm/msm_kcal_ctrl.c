@@ -255,13 +255,13 @@ static unsigned int lcd_rgb_working_lut[256] = {
 };
 */
 
-void static resetWorkingLut(void)
+static void resetWorkingLut(void)
 {
 	memcpy((void *)lcd_rgb_working_lut, (void *)lcd_rgb_linear_lut,
 		sizeof(lcd_rgb_linear_lut));
 }
 
-void static updateLUT(unsigned int lut_val, unsigned int color,
+static void updateLUT(unsigned int lut_val, unsigned int color,
 			unsigned int posn)
 {
 	int offset, mask;
@@ -351,7 +351,7 @@ static ssize_t kgamma_reset_show(struct device *dev,
 
 static struct kcal_data kcal_value = {255, 255, 255};
 
-static int update_lcdc_lut(void)
+int update_preset_lcdc_lut(void)
 {
 	struct fb_cmap cmap;
 	int ret = 0;
@@ -371,6 +371,7 @@ static int update_lcdc_lut(void)
 
 	return ret;
 }
+EXPORT_SYMBOL(update_preset_lcdc_lut);
 
 static int kcal_set_values(int kcal_r, int kcal_g, int kcal_b)
 {
@@ -390,7 +391,7 @@ static int kcal_get_values(int *kcal_r, int *kcal_g, int *kcal_b)
 
 static int kcal_refresh_values(void)
 {
-        return update_lcdc_lut();
+        return update_preset_lcdc_lut();
 }
 
 static ssize_t kcal_store(struct device *dev, struct device_attribute *attr,
@@ -547,11 +548,11 @@ int __init kcal_ctrl_init(void)
 	kcalPtr->get_values = kcal_get_values;
 	kcalPtr->refresh_display = kcal_refresh_values;
 
-#endif
 	unsigned int addr;
 
 	addr =  kallsyms_lookup_name("update_preset_lcdc_lut");
 	*(funcPtr *)addr = (funcPtr)update_lcdc_lut;
+#endif
 
 	platform_add_devices(msm_panel_devices,
 		ARRAY_SIZE(msm_panel_devices));
