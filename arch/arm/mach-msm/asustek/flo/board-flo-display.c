@@ -153,10 +153,7 @@ static int msm_fb_detect_panel(const char *name)
 }
 
 #ifdef CONFIG_UPDATE_LCDC_LUT
-int update_preset_lcdc_lut(void)
-{
-	return 0;
-}
+extern int update_preset_lcdc_lut(void);
 #endif
 
 static struct msm_fb_platform_data msm_fb_pdata = {
