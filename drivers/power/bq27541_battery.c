@@ -264,6 +264,7 @@ static struct bq27541_device_info {
 	int bat_current;
 	int bat_capacity;
 	int bat_capacity_zero_count;
+	unsigned int chg_state;
 	unsigned int old_capacity;
 	unsigned int cap_err;
 	int old_temperature;
@@ -566,15 +567,16 @@ static int bq27541_get_psp(int reg_offset, enum power_supply_property psp,
 
 		if ((ac_on || usb_on || wireless_on) && !otg_on) {/* Charging detected */
 			if (bq27541_device->old_capacity == 100) {
-				val->intval = POWER_SUPPLY_STATUS_FULL;
+				bq27541_device->chg_state = POWER_SUPPLY_STATUS_FULL;
 			} else {
-				val->intval = POWER_SUPPLY_STATUS_CHARGING;
+				bq27541_device->chg_state = POWER_SUPPLY_STATUS_CHARGING;
 			}
 		} else if (ret & BATT_STS_SOCF) {		/* Fully Discharged detected */
-			val->intval = POWER_SUPPLY_STATUS_DISCHARGING;
+			bq27541_device->chg_state = POWER_SUPPLY_STATUS_DISCHARGING;
 		} else {
-			val->intval = POWER_SUPPLY_STATUS_NOT_CHARGING;
+			bq27541_device->chg_state = POWER_SUPPLY_STATUS_NOT_CHARGING;
 		}
+		val->intval = bq27541_device->chg_state;
 		BAT_NOTICE("status: %s ret= 0x%04x\n", status_text[val->intval], ret);
 
 	} else if (psp == POWER_SUPPLY_PROP_TEMP) {
@@ -676,7 +678,15 @@ static int bq27541_get_capacity(union power_supply_propval *val)
 
 	/*Re-check capacity to avoid  that temp_capacity <0*/
 	temp_capacity = ((temp_capacity <0) ? 0 : temp_capacity);
-	val->intval = temp_capacity;
+
+	/*Ensure capacity increases only when necessary*/
+	if (temp_capacity > bq27541_device->old_capacity &&
+			(bq27541_device->chg_state == POWER_SUPPLY_STATUS_DISCHARGING ||
+			bq27541_device->chg_state == POWER_SUPPLY_STATUS_NOT_CHARGING)) {
+		val->intval = bq27541_device->old_capacity;
+	} else {
+		val->intval = temp_capacity;
+	}
 
 	if ((temp_capacity == 0) &&
 		(bq27541_battery_cable_status || wireless_on)) {
@@ -704,7 +714,8 @@ static int bq27541_get_capacity(union power_supply_propval *val)
 			battery_check_interval);
 	}
 
-	bq27541_device->old_capacity = val->intval;
+	if (val->intval != bq27541_device->old_capacity)
+		bq27541_device->old_capacity = val->intval;
 	bq27541_device->cap_err=0;
 
 	BAT_NOTICE("= %u%% ret= %u\n", val->intval, ret);
