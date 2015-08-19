@@ -3896,9 +3896,7 @@ eHalStatus csrNeighborRoamIndicateConnect(tpAniSirGlobal pMac, tANI_U8 sessionId
     int  init_ft_flag = FALSE;
 #endif
 
-    // if session id invalid then we need return failure
-    if (NULL == pNeighborRoamInfo  || !CSR_IS_SESSION_VALID(pMac, sessionId) ||
-	(NULL == pMac->roam.roamSession[sessionId].pCurRoamProfile))
+    if (NULL == pNeighborRoamInfo)
     {
         return eHAL_STATUS_FAILURE;
     }
