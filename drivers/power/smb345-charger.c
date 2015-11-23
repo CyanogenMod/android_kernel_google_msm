@@ -119,6 +119,9 @@ extern int  bq27541_battery_callback(unsigned usb_cable_state);
 extern int  bq27541_wireless_callback(unsigned wireless_state);
 extern void touch_callback(unsigned cable_status);
 static ssize_t smb345_reg_show(struct device *dev, struct device_attribute *attr, char *buf);
+static ssize_t smb345_float_voltage_show(struct device *dev, struct device_attribute *attr, char *buf);
+static ssize_t smb345_float_voltage_store(struct device *dev,
+	struct device_attribute *attr, const char *buf, size_t count);
 
 /* Global variables */
 static struct smb345_charger *charger;
@@ -132,12 +135,16 @@ extern int ac_on;
 extern int usb_on;
 static bool wpc_en;
 static bool disable_DCIN;
+static int float_volt_setting = 4300;
 
 /* Sysfs interface */
 static DEVICE_ATTR(reg_status, S_IWUSR | S_IRUGO, smb345_reg_show, NULL);
+static DEVICE_ATTR(float_voltage, 0644, smb345_float_voltage_show,
+	smb345_float_voltage_store);
 
 static struct attribute *smb345_attributes[] = {
 	&dev_attr_reg_status.attr,
+	&dev_attr_float_voltage.attr,
 NULL
 };
 
@@ -942,6 +949,30 @@ static ssize_t smb345_reg_show(struct device *dev, struct device_attribute *attr
 	return strlen(buf);
 }
 
+static ssize_t smb345_float_voltage_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%u\n", float_volt_setting);
+}
+
+/* Set charger float voltage; desired value in mV. */
+static ssize_t smb345_float_voltage_store(struct device *dev,
+	struct device_attribute *attr, const char *buf, size_t count)
+{
+	int val = 0;
+
+	if(kstrtoint(buf, 0, &val) != 0)
+		goto error;
+	val = (val / 20) * 20; /* the charger can only do 20mV increments */
+	if(val < 3800 || val > 4300)
+		goto error;
+
+	float_volt_setting = val;
+
+	return count;
+error:
+	return -EINVAL;
+}
+
 static int smb345_otg_setting(struct i2c_client *client)
 {
 	int ret;
@@ -1101,6 +1132,18 @@ int smb345_config_thermal_charging(int temp, int volt, int rule)
 	struct i2c_client *client = charger->client;
 	int ret = 0, retval, setting = 0;
 	int BAT_Mid_Temp = BAT_Mid_Temp_Wired;
+	/*Charger float voltage for normal temperature conditions. Default 4.3V.*/
+	int flt_volt_43 = FLOAT_VOLT_43V;
+	/*Charger float voltage for high temperature conditions. Default 4.1V.*/
+	int flt_volt_low = FLOAT_VOLT_LOW;
+
+	flt_volt_43 = (float_volt_setting - 3500) / 20;
+
+	if(flt_volt_43 < 0 || flt_volt_43 > FLOAT_VOLT_43V) {
+		SMB_NOTICE("BUG: Invalid float voltage setting calculated: %d\n", flt_volt_43);
+		flt_volt_43 = FLOAT_VOLT_43V;
+	}
+	if(flt_volt_low > flt_volt_43) flt_volt_low = flt_volt_43;
 
 	if (rule == THERMAL_RULE1)
 		BAT_Mid_Temp = BAT_Mid_Temp_Wired;
@@ -1130,10 +1173,10 @@ int smb345_config_thermal_charging(int temp, int volt, int rule)
 	if (temp <= BAT_Mid_Temp
 		|| (temp > BAT_Mid_Temp && volt > FLOAT_VOLT_LOW_DECIMAL)
 		|| temp > BAT_Hot_Limit) {
-		if (setting != FLOAT_VOLT_43V) {
+		if (setting != flt_volt_43) {
 			setting = retval & (~FLOAT_VOLT_MASK);
-			setting |= FLOAT_VOLT_43V;
-			SMB_NOTICE("Set Float Volt, retval=%x setting=%x\n", retval, setting);
+			setting |= flt_volt_43;
+			SMB_NOTICE("Set Float Volt, retval=%x setting=%x V=%dmV\n", retval, setting, float_volt_setting);
 			ret = smb345_write(client, smb345_FLOAT_VLTG, setting);
 			if (ret < 0) {
 				dev_err(&client->dev, "%s(): Failed in writing 0x%02x to register"
@@ -1141,11 +1184,11 @@ int smb345_config_thermal_charging(int temp, int volt, int rule)
 				goto error;
 			}
 		} else
-			SMB_NOTICE("Bypass set Float Volt=%x\n", retval);
+			SMB_NOTICE("Bypass set Float Volt setting=%x V=%dmV\n", retval, float_volt_setting);
 	} else {
-		if (setting != FLOAT_VOLT_LOW) {
+		if (setting != flt_volt_low) {
 			setting = retval & (~FLOAT_VOLT_MASK);
-			setting |= FLOAT_VOLT_LOW;
+			setting |= flt_volt_low;
 			SMB_NOTICE("Set Float Volt, retval=%x setting=%x\n", retval, setting);
 			ret = smb345_write(client, smb345_FLOAT_VLTG, setting);
 			if (ret < 0) {

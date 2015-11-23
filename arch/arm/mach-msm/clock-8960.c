@@ -3555,6 +3555,31 @@ static struct clk_freq_tbl clk_tbl_gfx3d_8960[] = {
 	F_END
 };
 
+static struct clk_freq_tbl clk_tbl_gfx3d_8064[] = {
+	F_GFX3D(        0, gnd,   0,  0),
+	F_GFX3D(  1800000, pxo,   1, 15),
+	F_GFX3D( 27000000, pxo,   0,  0),
+	F_GFX3D( 48000000, pll8,  1,  8),
+	F_GFX3D( 54857000, pll8,  1,  7),
+	F_GFX3D( 64000000, pll8,  1,  6),
+	F_GFX3D( 76800000, pll8,  1,  5),
+	F_GFX3D( 96000000, pll8,  1,  4),
+	F_GFX3D(128000000, pll8,  1,  3),
+	F_GFX3D(145455000, pll2,  2, 11),
+	F_GFX3D(160000000, pll2,  1,  5),
+	F_GFX3D(177778000, pll2,  2,  9),
+	F_GFX3D(192000000, pll8,  1,  2),
+	F_GFX3D(200000000, pll2,  1,  4),
+	F_GFX3D(228571000, pll2,  2,  7),
+	F_GFX3D(266667000, pll2,  1,  3),
+	F_GFX3D(320000000, pll2,  2,  5),
+	F_GFX3D(400000000, pll2,  1,  2),
+	F_GFX3D(487500000, pll15, 1,  2),
+	F_GFX3D(533333000, pll2,  2,  3),
+	F_GFX3D(650000000, pll15, 2,  3),
+	F_END
+};
+
 static struct clk_freq_tbl clk_tbl_gfx3d_8930ab[] = {
 	F_GFX3D(        0, gnd,   0,  0),
 	F_GFX3D( 27000000, pxo,   0,  0),
@@ -3586,7 +3611,7 @@ static unsigned long fmax_gfx3d_8064ab[VDD_DIG_NUM] = {
 static unsigned long fmax_gfx3d_8064[VDD_DIG_NUM] = {
 	[VDD_DIG_LOW]     = 128000000,
 	[VDD_DIG_NOMINAL] = 325000000,
-	[VDD_DIG_HIGH]    = 400000000
+	[VDD_DIG_HIGH]    = 650000000
 };
 
 static unsigned long fmax_gfx3d_8930[VDD_DIG_NUM] = {
@@ -6655,6 +6680,7 @@ static void __init msm8960_clock_pre_init(void)
 	 * clocks which differ between chips.
 	 */
 	if (cpu_is_apq8064() || cpu_is_apq8064aa()) {
+		gfx3d_clk.freq_tbl = clk_tbl_gfx3d_8064;
 		gfx3d_clk.c.fmax = fmax_gfx3d_8064;
 	}
 	if (cpu_is_apq8064ab()) {

@@ -1633,6 +1633,41 @@ config MSM_CPU_FREQ_MIN
 
 endif # CPU_FREQ_MSM
 
+config CPU_OVERCLOCK
+	bool "Enable CPU Overclocking option"
+	default n
+	help
+	  Enable CPU overclock for kraig apq8064 socs
+
+config CPU_UNDERCLOCK
+	bool "Enable CPU Underclocking"
+	default n
+	help
+	  Krait underclocking
+
+config CPU_VOLTAGE_TABLE
+	bool "Enable CPU Voltage Table via sysfs for adjustements"
+	default n
+	help
+	  Krait User Votlage Control
+
+config CMDLINE_OPTIONS
+	bool "Enable cmdline s2w/khz/gov/maxscroff/scheduler command parsing"
+	default n
+	help
+	  This enables the parsing of special cmdline variables.
+
+config MSM_CPU_AVS
+	bool "Enable software controlled Adaptive Voltage Scaling (AVS)"
+	depends on (ARCH_MSM_SCORPION && QSD_SVS)
+	depends on ARCH_QSD8X50
+	default n
+	select MSM_AVS_HW
+	help
+	  This enables the s/w control of Adaptive Voltage Scaling feature
+	  in Qualcomm ARMv7 CPUs. It adjusts the voltage for each frequency
+	  based on feedback from three ring oscillators in the CPU.
+
 config MSM_AVS_HW
 	bool "Enable Adaptive Voltage Scaling (AVS)"
 	default n
@@ -2643,5 +2678,24 @@ config MSM_USE_USER_ACCESSIBLE_TIMERS
 	help
 	  Enables MSM-specific user accessible timers via a shared
 	  memory page containing the cycle counter.
+
+config FORCE_FAST_CHARGE
+	bool "Force AC charge mode at will"
+	default y
+	help
+	  A simple sysfs interface to force adapters that
+	  are detected as USB to charge as AC.
+
+config UPDATE_LCDC_LUT
+        bool "Set initial Qualcomm LCDC lut"
+        default y
+        help
+          Set initial Qualcomm LCDC Look Up Table.
+
+config LCD_KCAL_STANDALONE
+        tristate "MSM generic LCDC Calibration"
+        default y
+        help
+          Enable MSM generic LCDC temperature Calibration.
 
 endif

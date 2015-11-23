@@ -225,9 +225,10 @@ int msm_dcvs_scm_event(uint32_t core_id,
 
 	ret = scm_call_atomic4_3(SCM_SVC_DCVS, DCVS_CMD_EVENT,
 			core_id, event_id, param0, param1, ret0, ret1);
-
+#if 0
 	trace_msm_dcvs_scm_event(core_id, (int)event_id, param0, param1,
 							*ret0, *ret1);
+#endif
 
 	return ret;
 }

@@ -2463,8 +2463,8 @@ static int msm_rotator_start(unsigned long arg,
 				fast_yuv_en = !fast_yuv_invalid_size_checker(
 						info.rotations,
 						info.src.width,
-						dst_w,
 						info.src.height,
+						dst_w,
 						dst_h,
 						dst_w,
 						is_planar420);
