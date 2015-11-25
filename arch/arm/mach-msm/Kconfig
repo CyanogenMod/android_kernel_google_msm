@@ -2644,4 +2644,16 @@ config MSM_USE_USER_ACCESSIBLE_TIMERS
 	  Enables MSM-specific user accessible timers via a shared
 	  memory page containing the cycle counter.
 
+config UPDATE_LCDC_LUT
+        bool "Set initial Qualcomm LCDC lut"
+        default n
+        help
+          Set initial Qualcomm LCDC Look Up Table.
+
+config LCD_KCAL_STANDALONE
+        tristate "MSM generic LCDC Calibration"
+        default n
+        help
+          Enable MSM generic LCDC temperature Calibration.
+
 endif
