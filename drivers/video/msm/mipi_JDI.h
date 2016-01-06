@@ -19,10 +19,13 @@ int mipi_JDI_device_register(struct msm_panel_info *pinfo,
 
 enum {
 	CABC_OFF = 0x0,
-	CABC_LOW = 0x1,
-	CABC_MED = 0x2,
-	CABC_HIGH = 0x3,
-	CABC_SRE = 0x60,
+	CABC_UI = 0x1,
+	CABC_IMAGE = 0x2,
+	CABC_VIDEO = 0x3,
+	SRE_WEAK = 0x50,
+	SRE_MEDIUM = 0x60,
+	SRE_STRONG = 0X70,
+	CABC_ACO = 0x80,
 };
 
 #endif  /* MIPI_JDI_H */
