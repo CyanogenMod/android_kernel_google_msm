@@ -51,8 +51,6 @@ static struct dsi_buf JDI_tx_buf;
 static struct dsi_buf JDI_rx_buf;
 static int mipi_JDI_lcd_init(void);
 
-static bool sre_enabled = false;
-
 static char sw_reset[2] = {0x01, 0x00}; /* DTYPE_DCS_WRITE */
 static char enter_sleep[2] = {0x10, 0x00}; /* DTYPE_DCS_WRITE */
 static char exit_sleep[2] = {0x11, 0x00}; /* DTYPE_DCS_WRITE */
@@ -87,7 +85,9 @@ static char backlight_control4[] = {0xCE, 0x7D, 0x40, 0x48, 0x56, 0x67, 0x78,
 static char LTPS_timing_setting[2] = {0xC6, 0x78};
 static char sequencer_timing_control[2] = {0xD6, 0x01};
 
-static int cabc_level = 0x00;
+static unsigned int cabc_level = 0x00;
+static unsigned int sre_level = 0x00;
+static bool aco_enabled = false;
 
 static struct dsi_cmd_desc JDI_display_on_cmds[] = {
 	{DTYPE_DCS_WRITE, 1, 0, 0, 5,
@@ -291,7 +291,7 @@ static void mipi_JDI_set_cabc(struct platform_device *pdev, int level)
 		return;
 
 	cabc_level = level;
-	if (!sre_enabled)
+	if (sre_level == 0)
 		JDI_command_cabc(pdev, cabc_level);
 }
 
@@ -299,14 +299,38 @@ static int mipi_JDI_get_cabc(struct platform_device *pdev) {
 	return cabc_level;
 }
 
-static void mipi_JDI_set_sre(struct platform_device *pdev, bool enabled)
+static void mipi_JDI_set_sre(struct platform_device *pdev, int level)
 {
-	sre_enabled = enabled;
-	JDI_command_cabc(pdev, (enabled ? (int)CABC_SRE : cabc_level));
+	unsigned int sre_value = 0;
+
+	if (level < 0 || level > 3)
+		return;
+
+	if (level == 1)
+		sre_value = SRE_WEAK;
+	else if (level == 2)
+		sre_value = SRE_MEDIUM;
+	else if (level == 3)
+		sre_value = SRE_STRONG;
+
+	sre_level = level;
+	JDI_command_cabc(pdev, sre_value ? sre_value : cabc_level);
 }
 
 static int mipi_JDI_get_sre(struct platform_device *pdev) {
-	return sre_enabled;
+	return sre_level;
+}
+
+static void mipi_JDI_set_aco(struct platform_device *pdev, bool enabled)
+{
+	aco_enabled = enabled;
+	// Let SRE take precedence for now
+	if (sre_level == 0)
+		JDI_command_cabc(pdev, (enabled ? CABC_ACO : cabc_level));
+}
+
+static int mipi_JDI_get_aco(struct platform_device *pdev) {
+	return aco_enabled;
 }
 
 static void mipi_JDI_set_backlight(struct msm_fb_data_type *mfd)
@@ -496,6 +520,8 @@ static struct msm_fb_panel_data JDI_panel_data = {
 	.get_cabc	= mipi_JDI_get_cabc,
 	.set_sre	= mipi_JDI_set_sre,
 	.get_sre	= mipi_JDI_get_sre,
+	.set_aco	= mipi_JDI_set_aco,
+	.get_aco	= mipi_JDI_get_aco,
 };
 
 static int ch_used[3];
