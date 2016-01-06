@@ -437,8 +437,10 @@ static DEVICE_ATTR(sre, S_IRUGO | S_IWUSR, msm_fb_get_sre, msm_fb_set_sre);
 static struct attribute *msm_fb_attrs[] = {
 	&dev_attr_msm_fb_type.attr,
 	&dev_attr_msm_fb_fps_level.attr,
+#ifndef CONFIG_MACH_APQ8064_MAKO
 	&dev_attr_cabc.attr,
 	&dev_attr_sre.attr,
+#endif
 	NULL,
 };
 static struct attribute_group msm_fb_attr_group = {
