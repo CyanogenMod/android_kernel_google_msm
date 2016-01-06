@@ -326,14 +326,14 @@ static ssize_t msm_fb_set_sre(struct device *dev,
 	unsigned long val;
 	int ret;
 
-	ret = kstrtoul(buf, 2, &val);
+	ret = kstrtoul(buf, 10, &val);
 	if (ret)
 		return ret;
 
-	if (val < 0 || val > 1)
+	if (val < 0 || val > 3)
 		return -EINVAL;
 	if (pdata->set_sre)
-		pdata->set_sre(mfd->pdev, val == 1);
+		pdata->set_sre(mfd->pdev, val);
 	return count;
 }
 
