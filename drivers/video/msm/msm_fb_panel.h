@@ -209,8 +209,11 @@ struct msm_fb_panel_data {
 	void (*set_cabc) (struct platform_device *pdev, int level);
 	int (*get_cabc) (struct platform_device *pdev);
 
-	void (*set_sre) (struct platform_device *pdev, bool enabled);
+	void (*set_sre) (struct platform_device *pdev, int level);
 	int (*get_sre) (struct platform_device *pdev);
+
+	void (*set_aco) (struct platform_device *pdev, bool enabled);
+	int (*get_aco) (struct platform_device *pdev);
 };
 
 /*===========================================================================
