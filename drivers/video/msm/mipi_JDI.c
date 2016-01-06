@@ -52,6 +52,7 @@ static struct dsi_buf JDI_rx_buf;
 static int mipi_JDI_lcd_init(void);
 
 static bool sre_enabled = false;
+static bool aco_enabled = false;
 
 static char sw_reset[2] = {0x01, 0x00}; /* DTYPE_DCS_WRITE */
 static char enter_sleep[2] = {0x10, 0x00}; /* DTYPE_DCS_WRITE */
@@ -309,6 +310,18 @@ static int mipi_JDI_get_sre(struct platform_device *pdev) {
 	return sre_enabled;
 }
 
+static void mipi_JDI_set_aco(struct platform_device *pdev, bool enabled)
+{
+	aco_enabled = enabled;
+	// Let SRE take precedence for now
+	if (!sre_enabled)
+		JDI_command_cabc(pdev, (enabled ? (int) CABC_ACO : cabc_level));
+}
+
+static int mipi_JDI_get_aco(struct platform_device *pdev) {
+	return aco_enabled;
+}
+
 static void mipi_JDI_set_backlight(struct msm_fb_data_type *mfd)
 {
 	int ret;
@@ -496,6 +509,8 @@ static struct msm_fb_panel_data JDI_panel_data = {
 	.get_cabc	= mipi_JDI_get_cabc,
 	.set_sre	= mipi_JDI_set_sre,
 	.get_sre	= mipi_JDI_get_sre,
+	.set_aco	= mipi_JDI_set_aco,
+	.get_aco	= mipi_JDI_get_aco,
 };
 
 static int ch_used[3];

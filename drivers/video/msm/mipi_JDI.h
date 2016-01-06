@@ -23,6 +23,7 @@ enum {
 	CABC_MED = 0x2,
 	CABC_HIGH = 0x3,
 	CABC_SRE = 0x60,
+	CABC_ACO = 0x80,
 };
 
 #endif  /* MIPI_JDI_H */
