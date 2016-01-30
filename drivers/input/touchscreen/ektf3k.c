@@ -40,7 +40,7 @@
 #define PACKET_SIZE		40
 #define NEW_PACKET_SIZE 55
 #define FINGER_NUM		10
-		
+
 #define PWR_STATE_DEEP_SLEEP	0
 #define PWR_STATE_NORMAL		1
 #define PWR_NORMAL_STATE 8
@@ -71,7 +71,7 @@
 
 #include <linux/i2c/ektf3k.h>
 
-// For Firmware Update 
+// For Firmware Update
 #define ELAN_IOCTLID	0xD0
 #define IOCTL_I2C_SLAVE	_IOW(ELAN_IOCTLID,  1, int)
 #define IOCTL_MAJOR_FW_VER  _IOR(ELAN_IOCTLID, 2, int)
@@ -87,10 +87,10 @@
 #define IOCTL_IAP_MODE_UNLOCK  _IOR(ELAN_IOCTLID, 12, int)
 #define IOCTL_I2C_INT  _IOR(ELAN_IOCTLID, 13, int)
 #define IOCTL_RESUME  _IOR(ELAN_IOCTLID, 14, int)
-#define IOCTL_FW_UPDATE _IOR(ELAN_IOCTLID, 22, int) 
+#define IOCTL_FW_UPDATE _IOR(ELAN_IOCTLID, 22, int)
 
 //don't use firmware update
-#define FIRMWARE_UPDATE_WITH_HEADER 1 
+#define FIRMWARE_UPDATE_WITH_HEADER 1
 
 uint16_t checksum_err=0;
 static uint8_t RECOVERY=0x00;
@@ -102,9 +102,9 @@ int BOOTCODE_VERSION=0x00;
 static int work_lock=0x00;
 
 #define USB_NO_Cable 0
-#define USB_DETECT_CABLE 1 
+#define USB_DETECT_CABLE 1
 #define USB_SHIFT 0
-#define AC_SHIFT 1 
+#define AC_SHIFT 1
 #define USB_Cable ((1 << (USB_SHIFT)) | (USB_DETECT_CABLE))
 #define USB_AC_Adapter ((1 << (AC_SHIFT)) | (USB_DETECT_CABLE))
 #define USB_CALBE_DETECT_MASK (USB_Cable  | USB_DETECT_CABLE)
@@ -112,7 +112,7 @@ static int work_lock=0x00;
 #define SLIM_HDMI_MODE 10
 #define HDMI_POWER_SOURCE_CMD 3
 static unsigned now_usb_cable_status=0;
-static unsigned int gPrint_point = 0; 
+static unsigned int gPrint_point = 0;
 
 #define TOUCH_STRESS_TEST 1
 #ifdef TOUCH_STRESS_TEST
@@ -130,7 +130,7 @@ static struct workqueue_struct *stress_work_queue;
 static atomic_t touch_char_available = ATOMIC_INIT(1);
 #endif
 
-#define _ENABLE_DBG_LEVEL    
+#define _ENABLE_DBG_LEVEL
 #ifdef _ENABLE_DBG_LEVEL
 	#define PROC_FS_NAME	"ektf_dbg"
 	#define PROC_FS_MAX_LEN	8
@@ -150,7 +150,7 @@ struct elan_ktf3k_ts_data {
 	int fw_id;
 	int x_resolution;
 	int y_resolution;
-// For Firmare Update 
+// For Firmare Update
 	struct miscdevice firmware;
       struct attribute_group attrs;
 	int status;
@@ -161,7 +161,7 @@ struct elan_ktf3k_ts_data {
 	struct wake_lock wakelock;
 #ifdef TOUCH_STRESS_TEST
       struct miscdevice  misc_dev;
-#endif 
+#endif
 };
 
 static struct elan_ktf3k_ts_data *private_ts = NULL;
@@ -196,18 +196,18 @@ static int debug = DEBUG_INFO;
 			printk("[ektf3k]:" __VA_ARGS__); \
 	} while (0)
 
-int elan_iap_open(struct inode *inode, struct file *filp){ 
+int elan_iap_open(struct inode *inode, struct file *filp){
 	touch_debug(DEBUG_INFO, "[ELAN]into elan_iap_open\n");
 		if (private_ts == NULL)  touch_debug(DEBUG_ERROR, "private_ts is NULL~~~");
-		
+
 	return 0;
 }
 
-int elan_iap_release(struct inode *inode, struct file *filp){    
+int elan_iap_release(struct inode *inode, struct file *filp){
 	return 0;
 }
 
-static ssize_t elan_iap_write(struct file *filp, const char *buff, size_t count, loff_t *offp){  
+static ssize_t elan_iap_write(struct file *filp, const char *buff, size_t count, loff_t *offp){
     int ret;
     char *tmp;
 
@@ -215,14 +215,14 @@ static ssize_t elan_iap_write(struct file *filp, const char *buff, size_t count,
         count = 8192;
 
     tmp = kmalloc(count, GFP_KERNEL);
-    
+
     if (tmp == NULL)
         return -ENOMEM;
 
     if (copy_from_user(tmp, buff, count)) {
         return -EFAULT;
     }
-	
+
     ret = i2c_master_send(private_ts->client, tmp, count);
     if (ret != count) touch_debug(DEBUG_ERROR, "ELAN i2c_master_send fail, ret=%d \n", ret);
     kfree(tmp);
@@ -230,11 +230,11 @@ static ssize_t elan_iap_write(struct file *filp, const char *buff, size_t count,
 
 }
 
-ssize_t elan_iap_read(struct file *filp, char *buff, size_t count, loff_t *offp){    
+ssize_t elan_iap_read(struct file *filp, char *buff, size_t count, loff_t *offp){
     char *tmp;
-    int ret;  
+    int ret;
     long rc;
-   
+
     if (count > 8192)
         count = 8192;
 
@@ -247,7 +247,7 @@ ssize_t elan_iap_read(struct file *filp, char *buff, size_t count, loff_t *offp)
 
     if (ret >= 0)
         rc = copy_to_user(buff, tmp, count);
-    
+
     kfree(tmp);
 
     return ret;
@@ -258,14 +258,14 @@ static long elan_iap_ioctl(/*struct inode *inode,*/ struct file *filp,    unsign
 	int __user *ip = (int __user *)arg;
 	touch_debug(DEBUG_INFO, "[ELAN]into elan_iap_ioctl cmd=%u\n", cmd);
 
-	switch (cmd) {        
-		case IOCTL_I2C_SLAVE: 
+	switch (cmd) {
+		case IOCTL_I2C_SLAVE:
 			private_ts->client->addr = (int __user)arg;
-			break;   
-		case IOCTL_MAJOR_FW_VER:            
-			break;        
-		case IOCTL_MINOR_FW_VER:            
-			break;        
+			break;
+		case IOCTL_MAJOR_FW_VER:
+			break;
+		case IOCTL_MINOR_FW_VER:
+			break;
 		case IOCTL_RESET:
 			return elan_ktf3k_ts_hw_reset(private_ts->client, 0);
 		case IOCTL_IAP_MODE_LOCK:
@@ -309,32 +309,32 @@ static long elan_iap_ioctl(/*struct inode *inode,*/ struct file *filp,    unsign
 		case IOCTL_RESUME:
 			elan_ktf3k_ts_resume(private_ts->client);
 			break;
-		default:            
-			break;   
-	}       
+		default:
+			break;
+	}
 	return 0;
 }
 
-struct file_operations elan_touch_fops = {    
-        .open =         elan_iap_open,    
-        .write =        elan_iap_write,    
-        .read = 	elan_iap_read,    
-        .release =	elan_iap_release,    
-	.unlocked_ioctl=elan_iap_ioctl, 
+struct file_operations elan_touch_fops = {
+        .open =         elan_iap_open,
+        .write =        elan_iap_write,
+        .read = 	elan_iap_read,
+        .release =	elan_iap_release,
+	.unlocked_ioctl=elan_iap_ioctl,
  };
 
 /* Detect old / new FW */
 static int isOldFW(struct i2c_client *client)
 {
     struct elan_ktf3k_ts_data *ts = i2c_get_clientdata(client);
-        
+
     touch_debug(DEBUG_MESSAGES, "[elan] GPIO_TP_INT_N=%d\n", ts->intr_gpio);
     if (gpio_get_value(ts->intr_gpio) == 0) {
-        // Old FW 
+        // Old FW
 	 touch_debug(DEBUG_INFO,  "[elan]detect intr=>Old FW\n");
 	 return 1;
     }
-	
+
     return 0;
 }
 
@@ -383,15 +383,15 @@ DEVICE_ATTR(elan_touchpanel_status, S_IRUGO, elan_show_status, NULL);
 
 static int check_fw_version(const unsigned char*firmware, unsigned int size, int fw_version){
        int id, version;
-	   
+
        if(size < 2*FIRMWARE_PAGE_SIZE)
            return -1;
-	   
-	 version = firmware[size - 2*FIRMWARE_PAGE_SIZE + 120] | 
-	 	      (firmware[size - 2*FIRMWARE_PAGE_SIZE + 121] << 8); 
-	 id = firmware[size - 2*FIRMWARE_PAGE_SIZE + 122] | 
+
+	 version = firmware[size - 2*FIRMWARE_PAGE_SIZE + 120] |
+	 	      (firmware[size - 2*FIRMWARE_PAGE_SIZE + 121] << 8);
+	 id = firmware[size - 2*FIRMWARE_PAGE_SIZE + 122] |
 	 	      (firmware[size - 2*FIRMWARE_PAGE_SIZE + 123] << 8);
-	 
+
 	 touch_debug(DEBUG_INFO, "The firmware was version 0x%X and id:0x%X\n", version, id);
 
 	 if (id == 0x3029 && BOOTCODE_VERSION >= 0x6046) {
@@ -401,7 +401,7 @@ static int check_fw_version(const unsigned char*firmware, unsigned int size, int
 		/*this buffer doesn't contain the touch firmware*/
 		return 0;
 	 }
-	 
+
 }
 
 
@@ -417,7 +417,7 @@ static ssize_t update_firmware(struct device *dev, struct device_attribute *deva
 	 unsigned int page_number;
 	 static unsigned char firmware[MAX_FIRMWARE_SIZE];
 	 int ret = 0, retry = 0;
-	 
+
 	 oldfs=get_fs();
 	 set_fs(KERNEL_DS);
 	 memset(file_path, 0, 100);
@@ -427,7 +427,7 @@ static ssize_t update_firmware(struct device *dev, struct device_attribute *deva
 	 if(PTR_ERR(firmware_fp) == -ENOENT){
 	     dev_err(&client->dev, "Error to open file %s\n", file_path);
 	     return -1;
-	 }    
+	 }
        //start move the firmware file into memory
        firmware_fp->f_pos = 0;
        for(pos = 0, page_number = 0; pos < MAX_FIRMWARE_SIZE; pos += FIRMWARE_PAGE_SIZE, page_number++){
@@ -439,15 +439,15 @@ static ssize_t update_firmware(struct device *dev, struct device_attribute *deva
 	 filp_close(firmware_fp, NULL);
 	 // check the firmware ID and version
 	 if(RECOVERY || check_fw_version(firmware, pos, ts->fw_ver) > 0){
-	     touch_debug(DEBUG_INFO, "Firmware update start!\n");	
+	     touch_debug(DEBUG_INFO, "Firmware update start!\n");
 	     do{
 //	         ret = firmware_update_header(client, firmware, page_number);//add by mars
 	         touch_debug(DEBUG_INFO, "Firmware update finish ret=%d retry=%d !\n", ret, retry++);
 	     }while(ret != 0 && retry < 3);
 	     if(ret == 0 && RECOVERY) RECOVERY = 0;
-	 }else 
+	 }else
 	     touch_debug(DEBUG_INFO, "No need to update firmware\n");
-	     
+
 	 return count;
 }
 */
@@ -537,13 +537,13 @@ static int elan_ktf3k_ts_get_data(struct i2c_client *client, uint8_t *cmd,
 	}
       down(&pSem);
       rc  = i2c_master_recv(client, buf, size);
-      up(&pSem);       
+      up(&pSem);
 	if(rc != size){
 	    dev_err(&client->dev,
 			"[elan]%s: i2c_master_read failed\n", __func__);
 	    return -EINVAL;
 	}
-	
+
 	return 0;
 }
 
@@ -565,14 +565,14 @@ static int elan_ktf3k_ts_read_command(struct i2c_client *client,
 	down(&pSem);
 	length = i2c_transfer(adapter, msg, 1);
 	up(&pSem);
-	
+
 	if (length == 1) // only send on packet
 		return value_length;
 	else
 		return -EIO;
 }
 
-static int elan_ktf3k_i2c_read_packet(struct i2c_client *client, 
+static int elan_ktf3k_i2c_read_packet(struct i2c_client *client,
 	u8 *value, u16 value_length){
        struct i2c_adapter *adapter = client->adapter;
 	struct i2c_msg msg[1];
@@ -589,7 +589,7 @@ static int elan_ktf3k_i2c_read_packet(struct i2c_client *client,
 	down(&pSem);
 	length = i2c_transfer(adapter, msg, 1);
 	up(&pSem);
-	
+
 	if (length == 1) // only send on packet
 		return value_length;
 	else
@@ -605,7 +605,7 @@ static int __hello_packet_handler(struct i2c_client *client)
 	rc = elan_ktf3k_ts_poll(client);
 	if (rc < 0) {
 		touch_debug(DEBUG_ERROR, "[elan] %s: IRQ is not low!\n", __func__);
-		RECOVERY = 1; 
+		RECOVERY = 1;
 	}
 
 	rc = i2c_master_recv(client, buf_recv, 4);
@@ -627,9 +627,9 @@ static int wait_for_IRQ_Low(struct i2c_client *client, int utime){
     do{
         usleep_range(utime,utime + 500);
 	  if(gpio_get_value(ts->intr_gpio) == 0)
-	      return 0; 
+	      return 0;
     }while(retry_times-- > 0);
-	
+
     touch_debug(DEBUG_INFO,"Wait IRQ time out\n");
     return -1;
 }
@@ -649,7 +649,7 @@ static int __fw_packet_handler(struct i2c_client *client, int immediate)
 	rc = elan_ktf3k_ts_read_command(client, cmd, 4, buf_recv, 4);
 	if (rc < 0)
 		return rc;
-	
+
 	if(immediate){
 	    wait_for_IRQ_Low(client, 1000);
 	    elan_ktf3k_i2c_read_packet(client, buf_recv, 4);
@@ -663,7 +663,7 @@ static int __fw_packet_handler(struct i2c_client *client, int immediate)
 	rc = elan_ktf3k_ts_read_command(client, cmd_x, 4, buf_recv, 4);
 	if (rc < 0)
 		return rc;
-	
+
 	if(immediate){
 	    wait_for_IRQ_Low(client, 1000);
 	    elan_ktf3k_i2c_read_packet(client, buf_recv, 4);
@@ -672,11 +672,11 @@ static int __fw_packet_handler(struct i2c_client *client, int immediate)
 	    X_RESOLUTION = ts->x_resolution;
 	    touch_debug(DEBUG_INFO, "[elan] %s: X resolution: 0x%4.4x\n", __func__, ts->x_resolution);
 	}
-// Y Resolution	
+// Y Resolution
 	rc = elan_ktf3k_ts_read_command(client, cmd_y, 4, buf_recv, 4);
 	if (rc < 0)
 		return rc;
-	
+
 	if(immediate){
 	    wait_for_IRQ_Low(client, 1000);
 	    elan_ktf3k_i2c_read_packet(client, buf_recv, 4);
@@ -689,7 +689,7 @@ static int __fw_packet_handler(struct i2c_client *client, int immediate)
 	rc = elan_ktf3k_ts_read_command(client, cmd_id, 4, buf_recv, 4);
 	if (rc < 0)
 		return rc;
-	
+
 	if(immediate){
 	    wait_for_IRQ_Low(client, 1000);
 	    elan_ktf3k_i2c_read_packet(client, buf_recv, 4);
@@ -735,7 +735,7 @@ static inline int elan_ktf3k_ts_parse_xy(uint8_t *data,
 static int elan_ktf3k_ts_setup(struct i2c_client *client)
 {
 	int rc, count = 10;
-retry:	
+retry:
         // Reset
         elan_ktf3k_ts_hw_reset(client, 250);
 	// Check if old firmware. If not, send the notmal_command to enter normal mode
@@ -743,10 +743,10 @@ retry:
            touch_debug(DEBUG_INFO, "The boot code is new!\n");
 	}else
 	    touch_debug(DEBUG_INFO, "The boot code is old!\n");
-	
+
 	rc = __hello_packet_handler(client);
 	touch_debug(DEBUG_INFO, "[elan] hello packet's rc = %d\n",rc);
-	if (rc < 0){ 
+	if (rc < 0){
                if (rc == -ETIME && count > 0) {
 			count--;
 			dev_err(&client->dev, "wait main hello timeout, reset\n");
@@ -800,7 +800,7 @@ static int elan_ktf3k_ts_rough_calibrate(struct i2c_client *client){
 	touch_debug(DEBUG_INFO,
 		"[elan] dump cmd: %02x, %02x, %02x, %02x\n",
 		cmd[0], cmd[1], cmd[2], cmd[3]);
-	
+
 	down(&pSem);
 	length = i2c_master_send(client, cmd, sizeof(cmd));
 	up(&pSem);
@@ -861,7 +861,7 @@ static int elan_ktf3k_ts_set_power_source(struct i2c_client *client, u8 state)
 	dev_dbg(&client->dev,
 		"[elan] dump cmd: %02x, %02x, %02x, %02x\n",
 		cmd[0], cmd[1], cmd[2], cmd[3]);
-      dev_info(&private_ts->client->dev, "Update power source to %d\n", state);	
+      dev_info(&private_ts->client->dev, "Update power source to %d\n", state);
       down(&pSem);
       length = i2c_master_send(client, cmd, sizeof(cmd));
       up(&pSem);
@@ -893,7 +893,7 @@ static int elan_ktf3k_ts_get_power_source(struct i2c_client *client)
 static void update_power_source(void){
       unsigned power_source = now_usb_cable_status;
       if(private_ts == NULL || work_lock) return;
-	// Send power state 1 if USB cable and AC charger was plugged on. 
+	// Send power state 1 if USB cable and AC charger was plugged on.
 	if (power_source == SLIM_HDMI_MODE) {
 		elan_ktf3k_ts_set_power_source(private_ts->client, HDMI_POWER_SOURCE_CMD);
 	} else {
@@ -901,7 +901,7 @@ static void update_power_source(void){
 	}
 }
 
-void touch_callback(unsigned cable_status){ 
+void touch_callback(unsigned cable_status){
       now_usb_cable_status = cable_status;
       update_power_source();
 }
@@ -938,13 +938,13 @@ static void elan_ktf3k_ts_report_data(struct i2c_client *client, uint8_t *buf)
 	uint16_t active = 0;
 	uint8_t idx=IDX_FINGER;
 
-      num = buf[2] & 0xf; 
+      num = buf[2] & 0xf;
 	for (i=0; i<34;i++)
 		checksum +=buf[i];
-	
-       if ((num < 3) || ((checksum & 0x00ff) == buf[34])) { 
-	    fbits = buf[2] & 0x30;	
-	    fbits = (fbits << 4) | buf[1]; 
+
+       if ((num < 3) || ((checksum & 0x00ff) == buf[34])) {
+	    fbits = buf[2] & 0x30;
+	    fbits = (fbits << 4) | buf[1];
           for(i = 0; i < FINGER_NUM; i++){
               active = fbits & 0x1;
               if(active || mTouchStatus[i]){
@@ -953,9 +953,9 @@ static void elan_ktf3k_ts_report_data(struct i2c_client *client, uint8_t *buf)
                   if(active){
                       elan_ktf3k_ts_parse_xy(&buf[idx], &x, &y);
 			   x = x > ts->abs_x_max ? 0 : ts->abs_x_max - x;
-			   y = y > ts->abs_y_max ? ts->abs_y_max : y; 
+			   y = y > ts->abs_y_max ? ts->abs_y_max : y;
 		         touch_size = ((i & 0x01) ? buf[size_index[i]] : (buf[size_index[i]] >> 4)) & 0x0F;
-			   pressure_size = touch_size << 4; // shift left touch size value to 4 bits for max pressure value 255   
+			   pressure_size = touch_size << 4; // shift left touch size value to 4 bits for max pressure value 255
                       input_report_abs(idev, ABS_MT_TOUCH_MAJOR, touch_size);
                       input_report_abs(idev, ABS_MT_PRESSURE, pressure_size);
                       input_report_abs(idev, ABS_MT_POSITION_X, y);
@@ -972,8 +972,8 @@ static void elan_ktf3k_ts_report_data(struct i2c_client *client, uint8_t *buf)
 	else {
 		checksum_err +=1;
 		touch_debug(DEBUG_ERROR, "[elan] Checksum Error %d byte[2]=%X\n", checksum_err, buf[2]);
-	}   
-     	
+	}
+
 	return;
 }
 
@@ -984,16 +984,16 @@ static void elan_ktf3k_ts_report_data2(struct i2c_client *client, uint8_t *buf)
 	uint16_t x, y, touch_size, pressure_size;
 	uint16_t fbits=0, checksum=0;
 	uint8_t i, num;
-	uint16_t active = 0; 
+	uint16_t active = 0;
 	uint8_t idx=IDX_FINGER;
 
       num = buf[2] & 0xf;
 	for (i=0; i<34;i++)
 		checksum +=buf[i];
-	
-	if ( (num < 3) || ((checksum & 0x00ff) == buf[34])) {   
-          fbits = buf[2] & 0x30;	
-	    fbits = (fbits << 4) | buf[1]; 
+
+	if ( (num < 3) || ((checksum & 0x00ff) == buf[34])) {
+          fbits = buf[2] & 0x30;
+	    fbits = (fbits << 4) | buf[1];
 	    //input_report_key(idev, BTN_TOUCH, 1);
           for(i = 0; i < FINGER_NUM; i++){
               active = fbits & 0x1;
@@ -1005,7 +1005,7 @@ static void elan_ktf3k_ts_report_data2(struct i2c_client *client, uint8_t *buf)
                       x = x > ts->abs_x_max ? 0 : ts->abs_x_max - x;
 			   y = y > ts->abs_y_max ? ts->abs_y_max : y;
 			   touch_size = buf[35 + i];
-			   pressure_size = buf[45 + i];	 
+			   pressure_size = buf[45 + i];
 			   input_report_abs(idev, ABS_MT_TOUCH_MAJOR, touch_size);
 			   input_report_abs(idev, ABS_MT_PRESSURE, pressure_size);
 			   input_report_abs(idev, ABS_MT_POSITION_X, y);
@@ -1022,7 +1022,7 @@ static void elan_ktf3k_ts_report_data2(struct i2c_client *client, uint8_t *buf)
 	else {
 		checksum_err +=1;
 		touch_debug(DEBUG_ERROR, "[elan] Checksum Error %d byte[2]=%X\n", checksum_err, buf[2]);
-	} 
+	}
 
 	return;
 }
@@ -1040,7 +1040,7 @@ static void process_resp_message(struct elan_ktf3k_ts_data *ts, const unsigned c
           FW_VERSION = ts->fw_ver;
           break;
       case 0x20: // Rough calibrate response
-          major = buf[2] & 0x0F;	  	
+          major = buf[2] & 0x0F;
           touch_debug(DEBUG_INFO, "Get the Rough Calibrate result:%d\n", major);
           break;
       case 0x40: // the power source
@@ -1055,9 +1055,9 @@ static void process_resp_message(struct elan_ktf3k_ts_data *ts, const unsigned c
           minor = ((buf[2] & 0x0f) << 4) | ((buf[3] & 0xf0) >> 4);
           ts->fw_id = major << 8 | minor;
           FW_ID = ts->fw_id;
-          break;	   
-      default: 
-          touch_debug(DEBUG_INFO, "[elan] Get unknow packet {0x%02X, 0x%02X, 0x%02X, 0x%02X}\n", buf[0], buf[1], buf[2], buf[3]);	
+          break;
+      default:
+          touch_debug(DEBUG_INFO, "[elan] Get unknow packet {0x%02X, 0x%02X, 0x%02X, 0x%02X}\n", buf[0], buf[1], buf[2], buf[3]);
       }
 }
 
@@ -1075,13 +1075,13 @@ static void elan_ktf3k_ts_work_func(struct work_struct *work)
 		enable_irq(ts->client->irq);
 		return;
 	}
-	      
+
 #ifndef ELAN_BUFFER_MODE
 		rc = elan_ktf3k_ts_recv_data(ts->client, buf, 40);
 #else
              down(&pSem);
 		rc = elan_ktf3k_ts_recv_data(ts->client, buf, 4); // read the first four bytes
-#endif 
+#endif
 		if (rc < 0)
 		{
                    up(&pSem);
@@ -1105,7 +1105,7 @@ static void elan_ktf3k_ts_work_func(struct work_struct *work)
 			  }
 			  elan_ktf3k_ts_report_data(ts->client, buf1);
 		    }
-		
+
 	           // Final package
 		    if (buf[1] == 3) {
 		        rc = elan_ktf3k_ts_recv_data(ts->client, buf2, PACKET_SIZE);
@@ -1129,7 +1129,7 @@ static void elan_ktf3k_ts_work_func(struct work_struct *work)
 			  }
 			  elan_ktf3k_ts_report_data2(ts->client, buf1);
 		    }
-		
+
 	           // Final package
 		    if (buf[1] == 3) {
 		        rc = elan_ktf3k_ts_recv_data(ts->client, buf2, NEW_PACKET_SIZE);
@@ -1145,9 +1145,9 @@ static void elan_ktf3k_ts_work_func(struct work_struct *work)
                  process_resp_message(ts, buf, 4);
 		    break;
 		default:
-		    up(&pSem);	
+		    up(&pSem);
 		    touch_debug(DEBUG_INFO, "[elan] Get unknow packet {0x%02X, 0x%02X, 0x%02X, 0x%02X}\n", buf[0], buf[1], buf[2], buf[3]);
-	       }		 
+	       }
 #endif
 		enable_irq(ts->client->irq);
 }
@@ -1156,7 +1156,7 @@ static irqreturn_t elan_ktf3k_ts_irq_handler(int irq, void *dev_id)
 {
 	struct elan_ktf3k_ts_data *ts = dev_id;
 	struct i2c_client *client = ts->client;
-	
+
 	dev_dbg(&client->dev, "[elan] %s\n", __func__);
 	disable_irq_nosync(ts->client->irq);
 	queue_work(ts->elan_wq, &ts->work);
@@ -1181,12 +1181,12 @@ static int elan_ktf3k_ts_register_interrupt(struct i2c_client *client)
 
 static ssize_t elan_touch_switch_name(struct switch_dev *sdev, char *buf)
 {
-	return sprintf(buf, "ELAN-%4.4x-%4.4x\n", 
+	return sprintf(buf, "ELAN-%4.4x-%4.4x\n",
 		   private_ts->fw_id, private_ts->fw_ver);
 }
 
 static ssize_t elan_touch_switch_state(struct switch_dev *sdev, char *buf)
-{ 
+{
       	return sprintf(buf, "%s\n", "0");
 }
 
@@ -1194,12 +1194,12 @@ static ssize_t elan_touch_switch_state(struct switch_dev *sdev, char *buf)
 static int ektf_proc_read(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data )
 {
 	int ret;
-	
+
 	touch_debug(DEBUG_MESSAGES, "call proc_read\n");
-	
+
 	if(offset > 0)  /* we have finished to read, return 0 */
 		ret  = 0;
-	else 
+	else
 		ret = sprintf(buffer, "Debug Level: Release Date: %s\n","2011/10/05");
 
 	return ret;
@@ -1207,16 +1207,16 @@ static int ektf_proc_read(char *buffer, char **buffer_location, off_t offset, in
 
 static int ektf_proc_write(struct file *file, const char *buffer, unsigned long count, void *data)
 {
-	char procfs_buffer_size = 0; 
+	char procfs_buffer_size = 0;
 	int i, ret = 0;
 	unsigned char procfs_buf[PROC_FS_MAX_LEN+1] = {0};
 	unsigned int command;
 
 	procfs_buffer_size = count;
-	if(procfs_buffer_size > PROC_FS_MAX_LEN ) 
+	if(procfs_buffer_size > PROC_FS_MAX_LEN )
 		procfs_buffer_size = PROC_FS_MAX_LEN+1;
-	
-	if( copy_from_user(procfs_buf, buffer, procfs_buffer_size) ) 
+
+	if( copy_from_user(procfs_buf, buffer, procfs_buffer_size) )
 	{
 		touch_debug(DEBUG_ERROR, " proc_write faied at copy_from_user\n");
 		return -EFAULT;
@@ -1231,18 +1231,18 @@ static int ektf_proc_write(struct file *file, const char *buffer, unsigned long 
 			command |= (procfs_buf[i]-'A'+10);
 		else if( procfs_buf[i]>='a' && procfs_buf[i]<='f' )
 			command |= (procfs_buf[i]-'a'+10);
-		
+
 		if(i!=procfs_buffer_size-2)
 			command <<= 4;
 	}
 
 	command = command&0xFFFFFFFF;
       switch(command){
-      case 0xF1: 
-	  	 gPrint_point = 1; 
+      case 0xF1:
+	  	 gPrint_point = 1;
 	  	 break;
-      case 0xF2: 
-	  	 gPrint_point = 0; 
+      case 0xF2:
+	  	 gPrint_point = 0;
 	  	 break;
       case 0xFF:
 	      	ret = elan_ktf3k_ts_rough_calibrate(private_ts->client);
@@ -1259,7 +1259,7 @@ static int ektf_proc_write(struct file *file, const char *buffer, unsigned long 
 #define FIRMWARE_PAGE_SIZE 132
 static unsigned char touch_firmware[] = {
  #include "fw_data.b"
- }; 
+ };
 
 #define SIZE_PER_PACKET 4
 
@@ -1268,21 +1268,21 @@ static int sendI2CPacket(struct i2c_client *client, const unsigned char *buf, un
      int retry_times = 10;
      for(i = 0; i < length; i += ret){
             ret  = i2c_master_send(client, buf + i,  length < SIZE_PER_PACKET ? length : SIZE_PER_PACKET);
-	    
+
 	    if(ret <= 0){
 	          retry_times--;
 		    ret = 0;
 	      }
 	     if(ret < (length < SIZE_PER_PACKET ? length : SIZE_PER_PACKET)){
 	          touch_debug(DEBUG_INFO,"Sending packet broken\n");
-		    //printk("[ektf3k]:Sending packet broken\n");	  
-	     } 
+		    //printk("[ektf3k]:Sending packet broken\n");
+	     }
 	     if(retry_times < 0){
 	          touch_debug(DEBUG_INFO,"Failed sending I2C touch firmware packet.\n");
-		   //printk("[ektf3k]:Failed sending I2C touch firmware packet.\n");	  
+		   //printk("[ektf3k]:Failed sending I2C touch firmware packet.\n");
 	          break;
 	     }
-	   
+
      }
 
      return i;
@@ -1295,8 +1295,8 @@ static int recvI2CPacket(struct i2c_client *client, unsigned char *buf, unsigned
             if(ret <= 0){
 	          retry_times--;
 		    ret = 0;
-	      }  
-				
+	      }
+
 	     if(retry_times < 0){
 	          touch_debug(DEBUG_INFO,"Failed sending I2C touch firmware packet.\n");
 	          //printk("[ektf3k]:Failed sending I2C touch firmware packet.\n");
@@ -1313,13 +1313,13 @@ static int firmware_update_header(struct i2c_client *client, unsigned char *firm
     int ret, i;
     int sendCount;
     int recvCount;
-    int write_times; 
+    int write_times;
     unsigned char packet_data[8] = {0};
     unsigned char nb_isp_cmd[4] = {0x45, 0x49, 0x41, 0x50};
-    unsigned char *cursor; 
+    unsigned char *cursor;
     struct elan_ktf3k_ts_data *ts = i2c_get_clientdata(client);
-	
-    if(ts == NULL) 
+
+    if(ts == NULL)
         return -1;
 
     touch_debug(DEBUG_INFO, "Start firmware update!\n");
@@ -1334,18 +1334,18 @@ static int firmware_update_header(struct i2c_client *client, unsigned char *firm
 		goto fw_update_failed;
 
     msleep(100);
-    packet_data[0] = 0x10; 
+    packet_data[0] = 0x10;
     if(sendI2CPacket(client, packet_data, 1) < 0) // send dummy byte
 	      goto fw_update_failed;
-	  
+
     cursor = firmware;
     touch_debug(DEBUG_INFO, "pages_number=%d\n", pages_number);
     for(i = 0; i < pages_number; i++){
-        write_times = 0; 
+        write_times = 0;
 page_write_retry:
 	  touch_debug(DEBUG_MESSAGES, "Update page number %d\n", i);
 
-          
+
           if((sendCount = sendI2CPacket(client, cursor, FIRMWARE_PAGE_SIZE)) != FIRMWARE_PAGE_SIZE){
 	      dev_err(&client->dev, "Fail to Update page number %d\n", i);
 		goto fw_update_failed;
@@ -1360,19 +1360,19 @@ page_write_retry:
 
           touch_debug(DEBUG_INFO, "recvI2CPacket recv %d bytes: %x %x\n", recvCount, packet_data[0], packet_data[1]);
 
-	
+
 	  if(packet_data[0] != 0xaa || packet_data[1] != 0xaa){
 	      touch_debug(DEBUG_INFO, "message received: %02X %02X Page %d rewrite\n", packet_data[0], packet_data[1], i);
 		if(write_times++ > 3)
 		    goto fw_update_failed;
-			
+
 		goto page_write_retry;
 	  }
-	  
-		  
+
+
 	  cursor += FIRMWARE_PAGE_SIZE;
     }
-	
+
     elan_ktf3k_ts_hw_reset(client, 0);
 
     /*check irq*/
@@ -1388,13 +1388,13 @@ page_write_retry:
     goto fw_update_finish;
 fw_update_failed:
     ret = -1;
-    touch_debug(DEBUG_INFO, "Failed the touch firmware update!\n");	
-fw_update_finish:  
+    touch_debug(DEBUG_INFO, "Failed the touch firmware update!\n");
+fw_update_finish:
     work_lock = 0;
     wake_unlock(&ts->wakelock);
-    enable_irq(client->irq);	
+    enable_irq(client->irq);
     touch_debug(DEBUG_INFO, "Finish the touch firmware update!\n");
-    return ret; 
+    return ret;
 }
 
 
@@ -1528,7 +1528,7 @@ static int elan_ktf3k_ts_probe(struct i2c_client *client,
 		err = 0;
 		//goto err_detect_failed;
 	}
-	
+
 	ts->status = 1; // set I2C status is OK;
 	wake_lock_init(&ts->wakelock, WAKE_LOCK_SUSPEND, "elan_touch");
 	if(err==0x80)
@@ -1540,7 +1540,7 @@ static int elan_ktf3k_ts_probe(struct i2c_client *client,
 		dev_err(&client->dev, "[elan] Failed to allocate input device\n");
 		goto err_input_dev_alloc_failed;
 	}
-	ts->input_dev->name = "elan-touchscreen";  
+	ts->input_dev->name = "elan-touchscreen";
 
 	//set_bit(BTN_TOUCH, ts->input_dev->keybit);
 	ts->abs_x_max =  pdata->abs_x_max;
@@ -1548,8 +1548,8 @@ static int elan_ktf3k_ts_probe(struct i2c_client *client,
 	touch_debug(DEBUG_INFO, "[Elan] Max X=%d, Max Y=%d\n", ts->abs_x_max, ts->abs_y_max);
 
 	input_mt_init_slots(ts->input_dev, FINGER_NUM);
-	input_set_abs_params(ts->input_dev, ABS_MT_POSITION_X, pdata->abs_y_min,  pdata->abs_y_max, 0, 0); // for 800 * 1280 
-	input_set_abs_params(ts->input_dev, ABS_MT_POSITION_Y, pdata->abs_x_min,  pdata->abs_x_max, 0, 0);// for 800 * 1280 
+	input_set_abs_params(ts->input_dev, ABS_MT_POSITION_X, pdata->abs_y_min,  pdata->abs_y_max, 0, 0); // for 800 * 1280
+	input_set_abs_params(ts->input_dev, ABS_MT_POSITION_Y, pdata->abs_x_min,  pdata->abs_x_max, 0, 0);// for 800 * 1280
 	input_set_abs_params(ts->input_dev, ABS_MT_TOUCH_MAJOR, 0, MAX_FINGER_SIZE, 0, 0);
 	input_set_abs_params(ts->input_dev, ABS_MT_PRESSURE, 0, MAX_FINGER_PRESSURE, 0, 0);
 
@@ -1573,8 +1573,8 @@ static int elan_ktf3k_ts_probe(struct i2c_client *client,
 		elan_ktf3k_ts_irq_handler(client->irq, ts);
 	}
 
-	
-#ifdef FIRMWARE_UPDATE_WITH_HEADER	
+
+#ifdef FIRMWARE_UPDATE_WITH_HEADER
       if (RECOVERY || check_fw_version(touch_firmware, sizeof(touch_firmware), ts->fw_ver) > 0)
           firmware_update_header(client, touch_firmware, sizeof(touch_firmware)/FIRMWARE_PAGE_SIZE);
 #endif
@@ -1594,10 +1594,10 @@ static int elan_ktf3k_ts_probe(struct i2c_client *client,
 	if (err) {
 		dev_err(&client->dev, "Not able to create the sysfs\n");
 	}
-	
+
 #ifdef _ENABLE_DBG_LEVEL
 	dbgProcFile = create_proc_entry(PROC_FS_NAME, 0600, NULL);
-	if (dbgProcFile == NULL) 
+	if (dbgProcFile == NULL)
 	{
 		remove_proc_entry(PROC_FS_NAME, NULL);
 		touch_debug(DEBUG_INFO, " Could not initialize /proc/%s\n", PROC_FS_NAME);
@@ -1633,19 +1633,19 @@ static int elan_ktf3k_ts_probe(struct i2c_client *client,
 		//goto exit;
 	}
 	switch_set_state(&ts->touch_sdev, 0);
-	   
+
 	touch_debug(DEBUG_INFO, "[elan] Start touchscreen %s in interrupt mode\n",
 		ts->input_dev->name);
 
   ts->firmware.minor = MISC_DYNAMIC_MINOR;
   ts->firmware.name = "elan-iap";
   ts->firmware.fops = &elan_touch_fops;
-  ts->firmware.mode = S_IFREG|S_IRWXUGO; 
+  ts->firmware.mode = S_IFREG|S_IRWXUGO;
 
   if (misc_register(&ts->firmware) < 0)
   	touch_debug(DEBUG_ERROR, "[ELAN]misc_register failed!!");
   else
-    touch_debug(DEBUG_INFO, "[ELAN]misc_register finished!!");	
+    touch_debug(DEBUG_INFO, "[ELAN]misc_register finished!!");
 
   update_power_source();
   return 0;
@@ -1731,7 +1731,7 @@ static int elan_ktf3k_ts_resume(struct i2c_client *client)
       //int delay_time;
 
 	//gpio_direction_output(31, 0);
-	  
+
 	touch_debug(DEBUG_INFO, "[elan] %s: enter\n", __func__);
 	if(work_lock == 0){
 	    do {
@@ -1745,7 +1745,7 @@ static int elan_ktf3k_ts_resume(struct i2c_client *client)
 	    } while (--retry);
 	}
 	//force_release_pos(client);
-      enable_irq(client->irq);	
+      enable_irq(client->irq);
 	return 0;
 }
 
