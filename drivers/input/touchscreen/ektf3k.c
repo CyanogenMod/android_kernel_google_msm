@@ -158,7 +158,7 @@ struct elan_ktf3k_ts_data {
 	int abs_x_max;
 	int abs_y_max;
 	int rst_gpio;
-	struct wake_lock wakelock;
+	struct wakeup_source wakeup_source;
 #ifdef TOUCH_STRESS_TEST
       struct miscdevice  misc_dev;
 #endif
@@ -271,12 +271,12 @@ static long elan_iap_ioctl(/*struct inode *inode,*/ struct file *filp,    unsign
 		case IOCTL_IAP_MODE_LOCK:
 			work_lock=1;
 			disable_irq(private_ts->client->irq);
-			wake_lock(&private_ts->wakelock);
+			__pm_stay_awake(&private_ts->wakeup_source);
 			break;
 		case IOCTL_IAP_MODE_UNLOCK:
 			work_lock=0;
 			enable_irq(private_ts->client->irq);
-			wake_unlock(&private_ts->wakelock);
+			__pm_relax(&private_ts->wakeup_source);
 			break;
 		case IOCTL_CHECK_RECOVERY_MODE:
 			return RECOVERY;
@@ -1324,7 +1324,7 @@ static int firmware_update_header(struct i2c_client *client, unsigned char *firm
 
     touch_debug(DEBUG_INFO, "Start firmware update!\n");
     disable_irq(client->irq);  // Blocking call no need to do extra wait
-    wake_lock(&ts->wakelock);
+    __pm_stay_awake(&ts->wakeup_source);
     work_lock = 1;
 	/*add delay for waiting bootcode initial*/
 	elan_ktf3k_ts_hw_reset(client, 20);
@@ -1391,7 +1391,7 @@ fw_update_failed:
     touch_debug(DEBUG_INFO, "Failed the touch firmware update!\n");
 fw_update_finish:
     work_lock = 0;
-    wake_unlock(&ts->wakelock);
+    __pm_relax(&ts->wakeup_source);
     enable_irq(client->irq);
     touch_debug(DEBUG_INFO, "Finish the touch firmware update!\n");
     return ret;
@@ -1530,7 +1530,7 @@ static int elan_ktf3k_ts_probe(struct i2c_client *client,
 	}
 
 	ts->status = 1; // set I2C status is OK;
-	wake_lock_init(&ts->wakelock, WAKE_LOCK_SUSPEND, "elan_touch");
+	wakeup_source_init(&ts->wakeup_source, "elan_touch");
 	if(err==0x80)
 	    touch_debug(DEBUG_INFO, "[ELAN] Touch is in boot mode!\n");
 
@@ -1680,7 +1680,7 @@ static int elan_ktf3k_ts_remove(struct i2c_client *client)
 	if (ts->elan_wq)
 		destroy_workqueue(ts->elan_wq);
 	input_unregister_device(ts->input_dev);
-	wake_lock_destroy(&ts->wakelock);
+	wakeup_source_trash(&ts->wakeup_source);
 #ifdef TOUCH_STRESS_TEST
 	misc_deregister(&ts->misc_dev);
 #endif
