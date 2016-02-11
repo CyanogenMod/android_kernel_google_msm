@@ -36,6 +36,11 @@
 #include <linux/proc_fs.h>
 #include <linux/wakelock.h>
 
+#ifdef CONFIG_FB
+#include <linux/fb.h>
+#include <linux/notifier.h>
+#endif
+
 #define PACKET_SIZE		40
 #define NEW_PACKET_SIZE 55
 #define FINGER_NUM		10
@@ -141,6 +146,9 @@ struct elan_ktf3k_ts_data {
 	struct input_dev *input_dev;
 	struct workqueue_struct *elan_wq;
 	struct work_struct work;
+#ifdef CONFIG_FB
+	struct notifier_block fb_notif;
+#endif
 	int (*power)(int on);
 	int intr_gpio;
 // Firmware Information
@@ -193,6 +201,11 @@ static int debug = DEBUG_INFO;
 		if (debug >= (level)) \
 			printk("[ektf3k]:" __VA_ARGS__); \
 	} while (0)
+
+#ifdef CONFIG_FB
+static int fb_notifier_callback(struct notifier_block *self,
+				unsigned long event, void *data);
+#endif
 
 int elan_iap_open(struct inode *inode, struct file *filp){
 	touch_debug(DEBUG_INFO, "[ELAN]into elan_iap_open\n");
@@ -1572,6 +1585,15 @@ static int elan_ktf3k_ts_probe(struct i2c_client *client,
           firmware_update_header(client, touch_firmware, sizeof(touch_firmware)/FIRMWARE_PAGE_SIZE);
 #endif
 
+#ifdef CONFIG_FB
+	ts->fb_notif.notifier_call = fb_notifier_callback;
+
+	err = fb_register_client(&ts->fb_notif);
+	if (err)
+		dev_err(&ts->client->dev,
+			"Unable to register fb_notifier: %d\n", err);
+#endif
+
 	private_ts = ts;
 
 	//elan_ktf2k_touch_sysfs_init();
@@ -1660,6 +1682,10 @@ static int elan_ktf3k_ts_remove(struct i2c_client *client)
 
 	elan_touch_sysfs_deinit();
 
+#ifdef CONFIG_FB
+	fb_unregister_client(&ts->fb_notif);
+#endif
+
 	free_irq(client->irq, ts);
 
 	if (ts->elan_wq)
@@ -1734,6 +1760,39 @@ static int elan_ktf3k_ts_resume(struct i2c_client *client)
 	return 0;
 }
 
+#ifdef CONFIG_FB
+static int fb_notifier_callback(struct notifier_block *self,
+		unsigned long event, void *data)
+{
+	struct fb_event *evdata = data;
+	int blank;
+	struct elan_ktf3k_ts_data *ts =
+		container_of(self, struct elan_ktf3k_ts_data, fb_notif);
+
+	if (!evdata || !evdata->data || !ts || !ts->client)
+		goto end;
+
+	if (event != FB_EVENT_BLANK)
+		goto end;
+
+	blank = *(int *) evdata->data;
+
+	switch (blank) {
+	case FB_BLANK_UNBLANK:
+		elan_ktf3k_ts_resume(ts->client);
+		break;
+	case FB_BLANK_POWERDOWN:
+		elan_ktf3k_ts_suspend(ts->client, PMSG_SUSPEND);
+		break;
+	default:
+		break;
+	}
+
+end:
+	return 0;
+}
+#endif
+
 static const struct i2c_device_id elan_ktf3k_ts_id[] = {
 	{ ELAN_KTF3K_NAME, 0 },
 	{ }
@@ -1742,8 +1801,10 @@ static const struct i2c_device_id elan_ktf3k_ts_id[] = {
 static struct i2c_driver ektf3k_ts_driver = {
 	.probe		= elan_ktf3k_ts_probe,
 	.remove		= elan_ktf3k_ts_remove,
+#ifndef CONFIG_FB
 	.suspend	= elan_ktf3k_ts_suspend,
 	.resume		= elan_ktf3k_ts_resume,
+#endif
 	.id_table	= elan_ktf3k_ts_id,
 	.driver		= {
 		.name = ELAN_KTF3K_NAME,
