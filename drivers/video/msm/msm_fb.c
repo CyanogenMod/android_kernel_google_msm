@@ -350,7 +350,7 @@ static ssize_t msm_fb_get_sre(struct device *dev,
 		(struct msm_fb_panel_data *)mfd->pdev->dev.platform_data;
 
 	if (pdata->get_sre)
-		ret = snprintf(buf, PAGE_SIZE, "%d", pdata->get_sre(mfd->pdev));
+		ret = snprintf(buf, PAGE_SIZE, "%d\n", pdata->get_sre(mfd->pdev));
 
 	return ret;
 }
@@ -389,7 +389,7 @@ static ssize_t msm_fb_get_aco(struct device *dev,
 		(struct msm_fb_panel_data *)mfd->pdev->dev.platform_data;
 
 	if (pdata->get_aco)
-		ret = snprintf(buf, PAGE_SIZE, "%d", pdata->get_aco(mfd->pdev));
+		ret = snprintf(buf, PAGE_SIZE, "%d\n", pdata->get_aco(mfd->pdev));
 
 	return ret;
 }
