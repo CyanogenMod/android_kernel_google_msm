@@ -1,4 +1,5 @@
-/* Copyright (c) 2010-2012, The Linux Foundation. All rights reserved.  *
+/* Copyright (c) 2010-2012, 2016, The Linux Foundation. All rights reserved.
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
  * only version 2 as published by the Free Software Foundation.
@@ -84,8 +85,10 @@ static struct msm_iommu_remote_lock msm_iommu_remote_lock;
 static void _msm_iommu_remote_spin_lock_init(void)
 {
 	msm_iommu_remote_lock.lock = smem_alloc(SMEM_SPINLOCK_ARRAY, 32);
-	memset(msm_iommu_remote_lock.lock, 0,
+	if (msm_iommu_remote_lock.lock) {
+		memset(msm_iommu_remote_lock.lock, 0,
 			sizeof(*msm_iommu_remote_lock.lock));
+	}
 }
 
 void msm_iommu_remote_p0_spin_lock(void)
