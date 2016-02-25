@@ -1,4 +1,4 @@
-/* Copyright (c) 2012, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012, 2016, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -1407,7 +1407,7 @@ static ssize_t epm_adc_psoc_show_in(struct device *dev,
 	struct epm_psoc_init_resp init_resp;
 	struct epm_psoc_channel_configure psoc_chan_configure;
 	struct epm_psoc_get_data psoc_get_meas;
-	int16_t *adc_code = 0;
+	int16_t adc_code = 0;
 	int rc = 0;
 
 	rc = epm_adc_psoc_gpio_init(true);
@@ -1445,16 +1445,16 @@ static ssize_t epm_adc_psoc_show_in(struct device *dev,
 		return 0;
 	}
 
-	*adc_code = psoc_get_meas.reading_value;
+	adc_code = psoc_get_meas.reading_value;
 
-	rc = epm_psoc_scale_result(adc_code,
+	rc = epm_psoc_scale_result(&adc_code,
 			psoc_chan_configure.channel_num);
 	if (rc) {
 		pr_info("Scale result failed\n");
 		return 0;
 	}
 
-	psoc_get_meas.reading_value = *adc_code;
+	psoc_get_meas.reading_value = adc_code;
 
 	rc = epm_adc_psoc_gpio_init(false);
 	if (rc) {
