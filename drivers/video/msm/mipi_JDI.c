@@ -269,8 +269,10 @@ static void JDI_command_backlight(int level)
 	mipi_dsi_cmdlist_put(&cmdreq_JDI);
 }
 
-static void JDI_command_cabc(void)
+static void JDI_command_cabc(struct platform_device *pdev)
 {
+	struct msm_fb_data_type *mfd = platform_get_drvdata(pdev);
+
 	write_cabc[1] = CABC_OFF;
 
 	switch (cabc_level) {
@@ -306,6 +308,9 @@ static void JDI_command_cabc(void)
 
 	pr_debug("%s: cabc cmd %d\n", __func__, write_cabc[1]);
 
+	if (!mfd->suspend.panel_power_on)
+		return;
+
 	/* mdp4_dsi_cmd_busy_wait: will turn on dsi clock also */
 	mipi_dsi_mdp_busy_wait();
 
@@ -320,7 +325,7 @@ static void JDI_command_cabc(void)
 static void mipi_JDI_set_cabc(struct platform_device *pdev, int level)
 {
 	cabc_level = level;
-	JDI_command_cabc();
+	JDI_command_cabc(pdev);
 }
 
 static int mipi_JDI_get_cabc(struct platform_device *pdev) {
@@ -330,7 +335,7 @@ static int mipi_JDI_get_cabc(struct platform_device *pdev) {
 static void mipi_JDI_set_sre(struct platform_device *pdev, int level)
 {
 	sre_level = level;
-	JDI_command_cabc();
+	JDI_command_cabc(pdev);
 }
 
 static int mipi_JDI_get_sre(struct platform_device *pdev) {
@@ -340,7 +345,7 @@ static int mipi_JDI_get_sre(struct platform_device *pdev) {
 static void mipi_JDI_set_aco(struct platform_device *pdev, bool enabled)
 {
 	aco_enabled = enabled;
-	JDI_command_cabc();
+	JDI_command_cabc(pdev);
 }
 
 static int mipi_JDI_get_aco(struct platform_device *pdev) {
