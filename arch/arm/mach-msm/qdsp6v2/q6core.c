@@ -262,11 +262,11 @@ static ssize_t apr_debug_write(struct file *file, const char __user *buf,
 	if (!strncmp(l_buf + 20, "open_q", 64)) {
 		apr_handle_q = apr_register("ADSP", "TEST", aprv2_debug_fn_q,
 							0xFFFFFFFF, NULL);
-		pr_info("Open_q %p\n", apr_handle_q);
+		pr_info("Open_q %pK\n", apr_handle_q);
 	} else if (!strncmp(l_buf + 20, "open_m", 64)) {
 		apr_handle_m = apr_register("MODEM", "TEST", aprv2_debug_fn_m,
 							0xFFFFFFFF, NULL);
-		pr_info("Open_m %p\n", apr_handle_m);
+		pr_info("Open_m %pK\n", apr_handle_m);
 	} else if (!strncmp(l_buf + 20, "write_q", 64)) {
 		struct apr_hdr *hdr;
 
