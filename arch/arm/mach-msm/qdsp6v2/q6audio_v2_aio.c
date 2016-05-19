@@ -53,18 +53,18 @@ void audio_aio_cb(uint32_t opcode, uint32_t token,
 
 	switch (opcode) {
 	case ASM_DATA_EVENT_WRITE_DONE_V2:
-		pr_debug("%s[%p]:ASM_DATA_EVENT_WRITE_DONE token = 0x%x\n",
+		pr_debug("%s[%pK]:ASM_DATA_EVENT_WRITE_DONE token = 0x%x\n",
 			__func__, audio, token);
 		audio_aio_async_write_ack(audio, token, payload);
 		break;
 	case ASM_DATA_EVENT_READ_DONE_V2:
-		pr_debug("%s[%p]:ASM_DATA_EVENT_READ_DONE token = 0x%x\n",
+		pr_debug("%s[%pK]:ASM_DATA_EVENT_READ_DONE token = 0x%x\n",
 			__func__, audio, token);
 		audio_aio_async_read_ack(audio, token, payload);
 		break;
 	case ASM_DATA_EVENT_RENDERED_EOS:
 		/* EOS Handle */
-		pr_debug("%s[%p]:ASM_DATA_CMDRSP_EOS\n", __func__, audio);
+		pr_debug("%s[%pK]:ASM_DATA_CMDRSP_EOS\n", __func__, audio);
 		if (audio->feedback) { /* Non-Tunnel mode */
 			audio->eos_rsp = 1;
 			/* propagate input EOS i/p buffer,
@@ -86,16 +86,16 @@ void audio_aio_cb(uint32_t opcode, uint32_t token,
 		break;
 	case ASM_DATA_CMD_MEDIA_FMT_UPDATE_V2:
 	case ASM_STREAM_CMD_SET_ENCDEC_PARAM:
-		pr_debug("%s[%p]:payload0[%x] payloa1d[%x]opcode= 0x%x\n",
+		pr_debug("%s[%pK]:payload0[%x] payloa1d[%x]opcode= 0x%x\n",
 			__func__, audio, payload[0], payload[1], opcode);
 		break;
 	case ASM_DATA_EVENT_SR_CM_CHANGE_NOTIFY:
 	case ASM_DATA_EVENT_ENC_SR_CM_CHANGE_NOTIFY:
-		pr_debug("%s[%p]: ASM_DATA_EVENT_SR_CM_CHANGE_NOTIFY, payload[0]-sr = %d, payload[1]-chl = %d, payload[2] = %d, payload[3] = %d\n",
+		pr_debug("%s[%pK]: ASM_DATA_EVENT_SR_CM_CHANGE_NOTIFY, payload[0]-sr = %d, payload[1]-chl = %d, payload[2] = %d, payload[3] = %d\n",
 					 __func__, audio, payload[0],
 					 payload[1], payload[2], payload[3]);
 
-		pr_debug("%s[%p]: ASM_DATA_EVENT_SR_CM_CHANGE_NOTIFY, sr(prev) = %d, chl(prev) = %d,",
+		pr_debug("%s[%pK]: ASM_DATA_EVENT_SR_CM_CHANGE_NOTIFY, sr(prev) = %d, chl(prev) = %d,",
 		__func__, audio, audio->pcm_cfg.sample_rate,
 		audio->pcm_cfg.channel_count);
 
@@ -150,7 +150,7 @@ void audio_aio_async_read_ack(struct q6audio_aio *audio, uint32_t token,
 							 = payload[9];
 			event_payload.aio_buf.data_len = payload[4]\
 				 + payload[5] + sizeof(struct dec_meta_out);
-			pr_debug("%s[%p]:nr of frames 0x%8x len=%d\n",
+			pr_debug("%s[%pK]:nr of frames 0x%8x len=%d\n",
 				__func__, audio,
 				filled_buf->meta_info.meta_out.num_of_frames,
 				event_payload.aio_buf.data_len);
@@ -162,7 +162,7 @@ void audio_aio_async_read_ack(struct q6audio_aio *audio, uint32_t token,
 					event_payload);
 		kfree(filled_buf);
 	} else {
-		pr_err("%s[%p]:expected=%lx ret=%x\n",
+		pr_err("%s[%pK]:expected=%lx ret=%x\n",
 			__func__, audio, filled_buf->token, token);
 		spin_unlock_irqrestore(&audio->dsp_lock, flags);
 	}
