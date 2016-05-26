@@ -25,7 +25,6 @@ enum {
 	SRE_WEAK = 0x50,
 	SRE_MEDIUM = 0x60,
 	SRE_STRONG = 0X70,
-	CABC_ACO = 0x80,
 };
 
 #endif  /* MIPI_JDI_H */
