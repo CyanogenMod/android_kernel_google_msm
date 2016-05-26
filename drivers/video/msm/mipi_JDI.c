@@ -87,7 +87,6 @@ static char sequencer_timing_control[2] = {0xD6, 0x01};
 
 static unsigned int cabc_level = 0;
 static unsigned int sre_level = 0;
-static bool aco_enabled = false;
 
 static struct dsi_cmd_desc JDI_display_on_cmds[] = {
 	{DTYPE_DCS_WRITE, 1, 0, 0, 5,
@@ -303,9 +302,6 @@ static void JDI_command_cabc(struct platform_device *pdev)
 		break;
 	}
 
-	if (aco_enabled)
-		write_cabc[1] |= CABC_ACO;
-
 	pr_debug("%s: cabc cmd %d\n", __func__, write_cabc[1]);
 
 	if (!mdp_panel_is_power_on(mfd->suspend.panel_power_state)) {
@@ -341,16 +337,6 @@ static void mipi_JDI_set_sre(struct platform_device *pdev, int level)
 
 static int mipi_JDI_get_sre(struct platform_device *pdev) {
 	return sre_level;
-}
-
-static void mipi_JDI_set_aco(struct platform_device *pdev, bool enabled)
-{
-	aco_enabled = enabled;
-	JDI_command_cabc(pdev);
-}
-
-static int mipi_JDI_get_aco(struct platform_device *pdev) {
-	return aco_enabled;
 }
 
 static void mipi_JDI_set_backlight(struct msm_fb_data_type *mfd)
@@ -526,8 +512,6 @@ static struct msm_fb_panel_data JDI_panel_data = {
 	.get_cabc	= mipi_JDI_get_cabc,
 	.set_sre	= mipi_JDI_set_sre,
 	.get_sre	= mipi_JDI_get_sre,
-	.set_aco	= mipi_JDI_set_aco,
-	.get_aco	= mipi_JDI_get_aco,
 };
 
 static int ch_used[3];
