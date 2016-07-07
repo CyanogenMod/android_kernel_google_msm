@@ -31,13 +31,18 @@
 
 #define IRSC_COMPLETION_TIMEOUT_MS 30000
 #define SEC_RULES_HASH_SZ 32
+
+#ifndef SIZE_MAX
+#define SIZE_MAX ((size_t)-1)
+#endif
+
 struct security_rule {
 	struct list_head list;
 	uint32_t service_id;
 	uint32_t instance_id;
 	unsigned reserved;
 	int num_group_info;
-	int *group_id;
+	gid_t *group_id;
 };
 
 static DEFINE_MUTEX(security_rules_lock);
@@ -98,6 +103,7 @@ int msm_ipc_config_sec_rules(void *arg)
 	struct config_sec_rules_args sec_rules_arg;
 	struct security_rule *rule, *temp_rule;
 	int key;
+	size_t group_info_sz;
 	int ret;
 
 	if (current_euid())
@@ -111,14 +117,20 @@ int msm_ipc_config_sec_rules(void *arg)
 	if (sec_rules_arg.num_group_info <= 0)
 		return -EINVAL;
 
+	if (sec_rules_arg.num_group_info > (SIZE_MAX / sizeof(gid_t))) {
+		pr_err("%s: Integer Overflow %d * %d\n", __func__,
+			sizeof(gid_t), sec_rules_arg.num_group_info);
+		return -EINVAL;
+	}
+	group_info_sz = sec_rules_arg.num_group_info * sizeof(gid_t);
+
 	rule = kzalloc(sizeof(struct security_rule), GFP_KERNEL);
 	if (!rule) {
 		pr_err("%s: security_rule alloc failed\n", __func__);
 		return -ENOMEM;
 	}
 
-	rule->group_id = kzalloc((sec_rules_arg.num_group_info * sizeof(int)),
-				 GFP_KERNEL);
+	rule->group_id = kzalloc(group_info_sz, GFP_KERNEL);
 	if (!rule->group_id) {
 		pr_err("%s: group_id alloc failed\n", __func__);
 		kfree(rule);
@@ -131,7 +143,7 @@ int msm_ipc_config_sec_rules(void *arg)
 	rule->num_group_info = sec_rules_arg.num_group_info;
 	ret = copy_from_user(rule->group_id,
 			     ((void *)(arg + sizeof(sec_rules_arg))),
-			     (rule->num_group_info * sizeof(uint32_t)));
+			     group_info_sz);
 	if (ret) {
 		kfree(rule->group_id);
 		kfree(rule);
