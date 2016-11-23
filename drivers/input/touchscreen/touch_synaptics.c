@@ -1088,6 +1088,8 @@ int synaptics_ts_ic_ctrl(struct i2c_client *client, u8 code, u16 value)
 
 int synaptics_ts_fw_upgrade_check(struct lge_touch_data *ts)
 {
+	return -1;
+
 	if (ts->fw_info.fw_start == 0) {
 		TOUCH_INFO_MSG("DO NOT UPDATE device has no firmware\n");
 		return -1;
